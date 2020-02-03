@@ -35,6 +35,24 @@ struct system_setup{
     int page_size_convertido;
 }sistema;
 
+struct process_setup{
+    char* nombre;
+    char* size;
+    int size_valor;
+    int size_unidad;
+    int *mem_ref;
+    int *ref_string;
+    int ref_string_size;
+    char *algoritmo;
+    int algoritmo_codigo;
+    int page_frames;
+}proceso;
+
+struct nodo{
+    int valor;
+    int aux;
+} * nodos;
+
 void trimLeading(char * str);
 int convertir(char *memoria);
 int getNumero(char *memoria);
@@ -134,6 +152,98 @@ int main(int argc, char **argv)
 	        sistema.page_size_valor = getNumero(parte2);
 	        sistema.page_size_unidad = getUnidad(parte2);
 	    }
+	    
+	    else if(strcmp(parte1,"process_name") == 0)
+	    {
+		proceso.nombre = (char*) malloc(strlen(parte2) * sizeof(char));
+		strcpy(proceso.nombre,parte2);
+	    }
+	
+	    else if(strcmp(parte1,"algorithm") == 0)
+	    {
+		proceso.algoritmo = (char*) malloc(strlen(parte2) * sizeof(char));
+		strcpy(proceso.algoritmo,parte2);
+		if(strcmp(parte2, "fifo") == 0)
+		    proceso.algoritmo_codigo = 1;
+		if(strcmp(parte2, "lru") == 0)
+		    proceso.algoritmo_codigo = 2;
+		if(strcmp(parte2, "optimal") == 0)
+		    proceso.algoritmo_codigo = 3;
+	    }
+
+	    else if(strcmp(parte1,"process_size") == 0)
+	    {
+		int valor = convertir(parte2);
+		if(valor == -1)
+		{
+	    	    printf("Error archivo de configuracion.\n");
+		    printf("Mal valor de memoria en la linea %d.\n", contador_l);
+		    exit(0);
+		}
+		proceso.size = (char*) malloc(strlen(parte2) * sizeof(char));
+		strcpy(proceso.size,parte2);
+	        proceso.size_valor = getNumero(parte2);
+	        proceso.size_unidad = getUnidad(parte2);
+	    }
+
+	    else if(strcmp(parte1,"process_memref") == 0)
+	    {
+		char *aux_memref = strtok(parte2, ",");
+		int cont_memref = 0;
+		while(aux_memref != NULL)
+		{
+		    int index = 0;
+		    int num_memref = 0;
+		    //printf("Aqui ->  %s\n", aux_memref);
+		    while(isdigit(aux_memref[index]))
+    		    {
+			num_memref = num_memref * 10 + (int)((aux_memref[index] - '0'));
+			index++;
+    		    }
+		    if(aux_memref[index] != '\0')
+		    {
+			printf("Error archivo de configuracion.\n");
+		    printf("Mal valor de memoria en la linea %d.\n", contador_l);
+		    exit(0);
+		    }
+		    if(cont_memref == 0)
+		    {
+			proceso.mem_ref = (int*) malloc(1 * sizeof(int));
+			proceso.mem_ref[0] = num_memref; 
+			proceso.ref_string = (int*) malloc(1 * sizeof(int));
+			proceso.ref_string[0] = (int)((int)num_memref/(int)(sistema.page_size_valor * pow(10, sistema.page_size_unidad)));
+			cont_memref++;
+		    }
+		    else
+		    {
+			proceso.mem_ref = (int*) realloc(proceso.mem_ref,(cont_memref +1) * sizeof(int));
+			proceso.mem_ref[cont_memref] = num_memref; 
+			proceso.ref_string = (int*) realloc(proceso.ref_string,(cont_memref +1)* sizeof(int));
+			proceso.ref_string[cont_memref] = (int)((int)num_memref/(int)(sistema.page_size_valor * pow(10, sistema.page_size_unidad)));
+			cont_memref++;
+		    }
+		    aux_memref = strtok(NULL, ",");
+		}
+		proceso.ref_string_size = cont_memref;
+	    }
+	    else if(strcmp(parte1,"page_frames") == 0)
+	    {
+		int num_page_frames = 0;
+	    	int index = 0;
+	        while(isdigit(parte2[index]))
+	        {
+		    num_page_frames = num_page_frames * 10 + (int)((parte2[index] - '0'));
+		    index++;
+	   	}
+	    	if(parte2[index] != '\0')
+	    	{
+		    printf("Error archivo de configuracion.\n");
+	            printf("Mal valor numerico en la linea %d.\n", contador_l);
+	        exit(0);
+	    	}
+		proceso.page_frames = num_page_frames;
+	    }
+	    
 	} 
 		
     }
@@ -151,6 +261,86 @@ int main(int argc, char **argv)
 
     printf("\n4.- Max number of Frames.\n");
     printf("   Frame size = Page Size = %s      MAX number of Frames = %d\n",sistema.page_size, (int) ((sistema.pas_valor * pow(10,sistema.pas_unidad))/(sistema.page_size_valor * pow(10, sistema.page_size_unidad))));
+
+    printf("\n5.- Size in bytes required to represent the Page Table (Hint: memory is byte addressable)\n");
+
+    printf("\n6.- Number of pages marked as valid for the process)\n");
+    printf("   Pages Valid = %s/%s = %d\n",proceso.size, sistema.page_size,(int)((proceso.size_valor / sistema.page_size_valor)*(pow(10,proceso.size_unidad - sistema.page_size_unidad))));
+
+    printf("\n7.- Reference string based on the address sequence)\n");
+    printf("    Mem Ref: ");
+    for(int i = 0; i < proceso.ref_string_size; i++)
+    {
+	printf(" %d  ", proceso.mem_ref[i]);
+	if(i % 5 == 4)
+	    printf("\n             ");
+    }
+    printf("\n");
+
+    printf("    Reference String: ");
+    for(int i = 0; i < proceso.ref_string_size; i++)
+    {
+	printf(" %d  ", proceso.ref_string[i]);
+	if(i % 5 == 4)
+	    printf("\n                      ");
+    }
+    printf("\n");
+
+    printf("\n8.- Show the output (table) of the page-replacement algorithm)\n");
+    nodos = (struct nodo*) malloc(proceso.page_frames * sizeof(struct nodo));
+    int contador_ingresos=0;
+    int hit = 0;
+    int **registro = (int**) malloc(proceso.page_frames * sizeof(int*));
+    for(int i = 0; i < proceso.page_frames; i++){
+	registro[i] = (int*) malloc(proceso.ref_string_size * sizeof(int));
+	nodos[i].valor = -1;
+	nodos[i].aux = (-1 * proceso.page_frames) + i;
+    }
+    if(proceso.algoritmo_codigo == 1)
+    {
+    for(int i = 0; i < proceso.ref_string_size; i++)
+    {
+	int bandera = 0;
+	for(int j=0; j< proceso.page_frames; j++)
+	{
+	    if(nodos[j].valor == proceso.ref_string[i])
+	    {
+		hit++;
+		bandera =1;
+		break;
+	    }
+	     
+	}
+	if(bandera == 0)
+	{
+	    int aux_menor = nodos[0].aux;
+	    int indice_menor = 0;
+	    for(int k=0; k< proceso.page_frames; k++)
+	    {
+		if(nodos[k].aux < aux_menor)
+		{
+		    aux_menor = nodos[k].aux;
+		    indice_menor = k;
+		}   
+	    }
+	    nodos[indice_menor].valor = proceso.ref_string[i];
+	    nodos[indice_menor].aux = contador_ingresos;
+	    contador_ingresos++;
+	}
+	for(int k=0; k< proceso.page_frames; k++)
+	{
+	    registro[k][i] = nodos[k].valor;
+	}
+    }
+    }
+    for(int i=0; i<proceso.page_frames; i++)
+    {
+	for(int j=0; j< proceso.ref_string_size; j++)
+		printf("%d   ",registro[i][j]);
+	printf("\n");
+    }
+
+
 }
 
 void trimLeading(char * str)
