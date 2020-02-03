@@ -40,7 +40,8 @@
      - Actualizacion: Comando actualizacion -> u, viejo, nuevo
      - Eliminacion: Comando eliminacion -> r, valor
      
-     ![Concurrencia](https://github.com/Oswagui/Proyecto_Operativos/blob/master/Diagramas%20y%20Documentaci%C3%B3n/twc.PNG)
+     ![Concurrencia](https://github.com/Oswagui/Proyecto-Operativos-Final/blob/master/Capturas/concurrencia.png)
+     ![Concurrencia](https://github.com/Oswagui/Proyecto-Operativos-Final/blob/master/Capturas/concurrencia%202.png)
      
     
  ## Estrategia
