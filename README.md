@@ -31,8 +31,8 @@
      - Estructura reporte
      - [executable] [args]
      
-     ![Shell_Captura](https://github.com/Oswagui/Proyecto_Operativos/blob/master/Diagramas%20y%20Documentaci%C3%B3n/shell.PNG)
-     
+     ![Simulacion](https://github.com/Oswagui/Proyecto-Operativos-Final/blob/master/Capturas/simulador%201.png)
+     ![Simulacion](https://github.com/Oswagui/Proyecto-Operativos-Final/blob/master/Capturas/simulador%202.png)
    + **COncurrencia** -> Validaciones necesarias por lo que permite las siguientes entradas. Se definio un archivo de configuracion
      - El archivo de configuracion debe tener numero de hilos y una lista de comandos para cada hilo.
      - Insercion: Comando insercion -> i,valor
@@ -40,11 +40,12 @@
      - Actualizacion: Comando actualizacion -> u, viejo, nuevo
      - Eliminacion: Comando eliminacion -> r, valor
      
-     ![Shell_Captura](https://github.com/Oswagui/Proyecto_Operativos/blob/master/Diagramas%20y%20Documentaci%C3%B3n/twc.PNG)
+     ![Concurrencia](https://github.com/Oswagui/Proyecto_Operativos/blob/master/Diagramas%20y%20Documentaci%C3%B3n/twc.PNG)
      
     
  ## Estrategia
- ![Estrategia wtc](https://github.com/Oswagui/Proyecto_Operativos/blob/master/Diagramas%20y%20Documentaci%C3%B3n/Estrategia%20twc.PNG)
+ ![Estrategia Concurrencia](https://github.com/Oswagui/Proyecto-Operativos-Final/blob/master/Estrategia/concurrencia_estrategia.PNG)
+ ![Estrategia Simulador](https://github.com/Oswagui/Proyecto-Operativos-Final/blob/master/Estrategia/simulacion_estrategia.PNG)
  
  
   ## Bugs
