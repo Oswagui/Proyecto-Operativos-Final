@@ -6,8 +6,8 @@ Tutor: Angel Lopez.
 Fecha: 03/02/2020
 
 Parte #1 -> Simulador de Remplazo de Paginas.
-Crear un aplicativo en c que permita simular una version simplificada del shell
-de Linux con dos principales funciones exit and cd implementadas usando las llamadas del sistema necesarias. Adicionalmente la creacion de un subproceso que incie un ejecutable sin perder el principal.
+Develop a program that simulates the page-replacement algorithms of a given setup.
+The program will load a configuration file from the command line.
 */
 
 //Importaciones Necesarias
@@ -19,6 +19,12 @@ de Linux con dos principales funciones exit and cd implementadas usando las llam
 #include<sys/wait.h> // Necesaria para realizar las pausas
 #include <ctype.h>
 #include <math.h>
+
+//Estructura de la primera parte del archivo de configuracion
+// Se mantiene el valor ingresado como texto
+// valor -> parte entera
+// unidad -> exponente en base 10 de la unidad
+// covertido -> exponente en base 2 equivalente
 
 struct system_setup{
     char* las;
@@ -35,6 +41,10 @@ struct system_setup{
     int page_size_convertido;
 }sistema;
 
+//Estructura de los procesos
+// Almacenamos cada variable
+// Mismo funcionamiento que el anterior con valor y unidad
+// Adicionalmente se agrego un codigo al algoritmo para 0 -> FIFO, 1-> LRU  y 2->Optimal
 struct process_setup{
     char* nombre;
     char* size;
@@ -48,16 +58,17 @@ struct process_setup{
     int page_frames;
 }proceso;
 
+//Se creo un nodo para validar la Tabla y ayudar con el remplazo de paginas
 struct nodo{
     int valor;
-    int aux;
-    int aux_optimal;
+    int aux; //Usada para LRU y FIFO
+    int aux_optimal; // Usada para Optimal
 } * nodos;
 
-void trimLeading(char * str);
-int convertir(char *memoria);
-int getNumero(char *memoria);
-int getUnidad(char *memoria);
+void trimLeading(char * str); // Funcion de limpiar linea
+int convertir(char *memoria); // Sacar exponente en base 2
+int getNumero(char *memoria); // Sacar parte entera
+int getUnidad(char *memoria); // Sacar base 10 de la unidad
 int main(int argc, char **argv)
 {
     char * line = NULL;
@@ -106,6 +117,7 @@ int main(int argc, char **argv)
 		exit(0);
             }
 	    
+	    //Si es LAS
 	    if(strcmp(parte1,"las") == 0)
 	    {
 		int valor = convertir(parte2);
@@ -121,7 +133,7 @@ int main(int argc, char **argv)
 		sistema.las_valor = getNumero(parte2);
 	        sistema.las_unidad = getUnidad(parte2);
 	    } 
-
+	    //Si es PAS
 	    else if(strcmp(parte1,"pas") == 0)
 	    {
 		int valor = convertir(parte2);
@@ -186,7 +198,7 @@ int main(int argc, char **argv)
 	        proceso.size_valor = getNumero(parte2);
 	        proceso.size_unidad = getUnidad(parte2);
 	    }
-
+	    // Lista de procesos
 	    else if(strcmp(parte1,"process_memref") == 0)
 	    {
 		char *aux_memref = strtok(parte2, ",");
@@ -207,6 +219,7 @@ int main(int argc, char **argv)
 		    printf("Mal valor de memoria en la linea %d.\n", contador_l);
 		    exit(0);
 		    }
+		    //Inicializacion
 		    if(cont_memref == 0)
 		    {
 			proceso.mem_ref = (int*) malloc(1 * sizeof(int));
@@ -215,12 +228,19 @@ int main(int argc, char **argv)
 			proceso.ref_string[0] = (int)((int)num_memref/(int)(sistema.page_size_valor * pow(10, sistema.page_size_unidad)));
 			cont_memref++;
 		    }
+		    //Carga y aprovechamos para convertir el string
 		    else
 		    {
 			proceso.mem_ref = (int*) realloc(proceso.mem_ref,(cont_memref +1) * sizeof(int));
 			proceso.mem_ref[cont_memref] = num_memref; 
 			proceso.ref_string = (int*) realloc(proceso.ref_string,(cont_memref +1)* sizeof(int));
 			proceso.ref_string[cont_memref] = (int)((int)num_memref/(int)(sistema.page_size_valor * pow(10, sistema.page_size_unidad)));
+			//Validar correcto paginado
+			if(proceso.ref_string[cont_memref] <0 || proceso.ref_string[cont_memref] > ((proceso.size_valor / sistema.page_size_valor)*(pow(10,proceso.size_unidad - sistema.page_size_unidad)))) {
+				printf("Error archivo de configuracion.\n");
+		    printf("Mal valor de memoria en la linea pagina no valida en linea %d.\n", contador_l);
+		    exit(0);
+			}
 			cont_memref++;
 		    }
 		    aux_memref = strtok(NULL, ",");
