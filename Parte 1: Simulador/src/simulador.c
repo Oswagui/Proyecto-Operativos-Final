@@ -51,6 +51,7 @@ struct process_setup{
 struct nodo{
     int valor;
     int aux;
+    int aux_optimal;
 } * nodos;
 
 void trimLeading(char * str);
@@ -247,7 +248,6 @@ int main(int argc, char **argv)
 	} 
 		
     }
-    printf("\nTodo bien\n");
     printf("===== Resultados =====\n");
 
     printf("\n1.- Logical address structure: page bits and offset bits.\n");
@@ -296,8 +296,9 @@ int main(int argc, char **argv)
 	nodos[i].valor = -1;
 	nodos[i].aux = (-1 * proceso.page_frames) + i;
     }
-    if(proceso.algoritmo_codigo == 1)
-    {
+    int *result = (int*) malloc(proceso.ref_string_size * sizeof(int));
+    
+    
     for(int i = 0; i < proceso.ref_string_size; i++)
     {
 	int bandera = 0;
@@ -306,6 +307,9 @@ int main(int argc, char **argv)
 	    if(nodos[j].valor == proceso.ref_string[i])
 	    {
 		hit++;
+		if(proceso.algoritmo_codigo >= 2 )
+		    nodos[j].aux = i;
+		result[i] = 1;
 		bandera =1;
 		break;
 	    }
@@ -313,6 +317,9 @@ int main(int argc, char **argv)
 	}
 	if(bandera == 0)
 	{
+	    result[i] = -1;
+	    if(proceso.algoritmo_codigo == 1 || proceso.algoritmo_codigo == 2)
+    	    {
 	    int aux_menor = nodos[0].aux;
 	    int indice_menor = 0;
 	    for(int k=0; k< proceso.page_frames; k++)
@@ -326,19 +333,73 @@ int main(int argc, char **argv)
 	    nodos[indice_menor].valor = proceso.ref_string[i];
 	    nodos[indice_menor].aux = contador_ingresos;
 	    contador_ingresos++;
+	    }
+	    if(proceso.algoritmo_codigo == 3)
+	    {
+		for(int k=0; k< proceso.page_frames; k++)
+	   	{
+		    for(int l=i;l< proceso.ref_string_size; l++)
+		    {
+			if(proceso.ref_string[l] == nodos[k].valor)
+			{
+			    nodos[k].aux_optimal = l - i;
+			    break;
+			}
+			else
+			{
+			    nodos[k].aux_optimal = proceso.ref_string_size + (i - nodos[k].aux);
+			}
+		    }
+		}
+		int aux_menor = nodos[0].aux_optimal;
+	    	int indice_menor = 0;
+	    	for(int k=0; k< proceso.page_frames; k++)
+	     	{
+		    if(nodos[k].aux_optimal > aux_menor)
+		    {
+			aux_menor = nodos[k].aux_optimal;
+		   	indice_menor = k;
+		    }   
+	   	}
+		nodos[indice_menor].valor = proceso.ref_string[i];
+	        nodos[indice_menor].aux = contador_ingresos;
+		contador_ingresos++;
+		
+	    }
+
 	}
 	for(int k=0; k< proceso.page_frames; k++)
 	{
 	    registro[k][i] = nodos[k].valor;
 	}
     }
-    }
+    
+    printf("\nAlgorithm: %s", proceso.algoritmo);
+    printf("\nRef Str: |");
+    for(int j=0; j< proceso.ref_string_size; j++)
+	printf(" %d |",proceso.ref_string[j]);
+    printf("\nFrame\n");
+    
     for(int i=0; i<proceso.page_frames; i++)
     {
+	printf("   %d :   |", i);
 	for(int j=0; j< proceso.ref_string_size; j++)
-		printf("%d   ",registro[i][j]);
+		if(registro[i][j] == -1)
+		   printf(" - |");
+		else
+		   printf(" %d |", registro[i][j]);
 	printf("\n");
     }
+    printf("\n   R :   |");
+    for(int j=0; j< proceso.ref_string_size; j++)
+	if(result[j] == 1)
+	    printf(" H |");
+	else
+	    printf(" M |");
+    printf("\n");
+
+    printf("\n9.- Summarise number of hits and page fault\n");
+    printf("   Hit = %d       Miss = %d\n",hit, proceso.ref_string_size - hit);
 
 
 }
